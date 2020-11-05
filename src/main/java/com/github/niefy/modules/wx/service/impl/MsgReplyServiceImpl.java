@@ -54,10 +54,16 @@ public class MsgReplyServiceImpl implements MsgReplyService {
     public boolean tryAutoReply(String appid, boolean exactMatch, String toUser, String keywords) {
         try {
             List<MsgReplyRule> rules = msgReplyRuleService.getMatchedRules(appid,exactMatch, keywords);
+            long delay = 0;
             if (rules.isEmpty()) {
+               ///未匹配到结果则去第三方网站获取资源
+
+
+
+
+
                 return false;
             }
-            long delay = 0;
             for (MsgReplyRule rule : rules) {
                 TaskExcutor.schedule(() -> {
                     wxMpService.switchover(appid);
@@ -74,8 +80,9 @@ public class MsgReplyServiceImpl implements MsgReplyService {
 
     @Override
     public void replyText(String toUser, String content) throws WxErrorException {
-        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.TEXT().toUser(toUser).content(content).build());
 
+
+        wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.TEXT().toUser(toUser).content(content).build());
         JSONObject json = new JSONObject().fluentPut("content",content);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.TEXT,toUser,json));
     }

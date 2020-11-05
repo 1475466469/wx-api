@@ -58,9 +58,9 @@ public class WxMpPortalController {
                        @RequestParam("openid") String openid,
                        @RequestParam(name = "encrypt_type", required = false) String encType,
                        @RequestParam(name = "msg_signature", required = false) String msgSignature) {
-//		logger.debug("\n接收微信请求：[openid=[{}], [signature=[{}], encType=[{}], msgSignature=[{}],"
-//						+ " timestamp=[{}], nonce=[{}], requestBody=[\n{}\n] ",
-//				openid, signature, encType, msgSignature, timestamp, nonce, requestBody);
+		logger.debug("\n接收微信请求：[openid=[{}], [signature=[{}], encType=[{}], msgSignature=[{}],"
+						+ " timestamp=[{}], nonce=[{}], requestBody=[\n{}\n] ",
+				openid, signature, encType, msgSignature, timestamp, nonce, requestBody);
         this.wxService.switchoverTo(appid);
         if (!wxService.checkSignature(timestamp, nonce, signature)) {
             throw new IllegalArgumentException("非法请求，可能属于伪造的请求！");
@@ -70,6 +70,7 @@ public class WxMpPortalController {
         if (encType == null) {
             // 明文传输的消息
             WxMpXmlMessage inMessage = WxMpXmlMessage.fromXml(requestBody);
+
             WxMpXmlOutMessage outMessage = this.route(appid,inMessage);
             if (outMessage == null) {
                 return "";
