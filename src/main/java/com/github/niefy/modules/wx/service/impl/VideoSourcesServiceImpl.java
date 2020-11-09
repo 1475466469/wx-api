@@ -2,20 +2,21 @@ package com.github.niefy.modules.wx.service.impl;
 
 import com.github.niefy.modules.wx.entity.DataResult;
 import com.github.niefy.modules.wx.service.VideoSourcesService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class VideoSourcesServiceImpl implements VideoSourcesService {
 
     final  String Url="http://qishizihua.com/result.php?s=";
@@ -36,11 +37,6 @@ public class VideoSourcesServiceImpl implements VideoSourcesService {
             re.text=item.select("label>span").text();
             results.add(re);
         }
-
       return  results;
-
-
-
-
     }
 }

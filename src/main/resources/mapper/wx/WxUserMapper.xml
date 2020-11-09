@@ -6,4 +6,5 @@
     <update id="unsubscribe">
         UPDATE wx_user SET subscribe=0 WHERE openid=#{openid}
     </update>
+
 </mapper>

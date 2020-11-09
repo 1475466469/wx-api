@@ -3,10 +3,12 @@ package com.github.niefy.modules.wx.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.niefy.config.TaskExcutor;
+import com.github.niefy.modules.wx.entity.DataResult;
 import com.github.niefy.modules.wx.entity.MsgReplyRule;
 import com.github.niefy.modules.wx.entity.WxMsg;
 import com.github.niefy.modules.wx.service.MsgReplyRuleService;
 import com.github.niefy.modules.wx.service.MsgReplyService;
+import com.github.niefy.modules.wx.service.VideoSourcesService;
 import com.github.niefy.modules.wx.service.WxMsgService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,10 @@ public class MsgReplyServiceImpl implements MsgReplyService {
     Long autoReplyInterval;
     @Autowired
     WxMsgService wxMsgService;
+    @Autowired
+    VideoSourcesService videoSourcesService;
+
+
 
     /**
      * 根据规则配置通过微信客服消息接口自动回复消息
@@ -55,13 +61,43 @@ public class MsgReplyServiceImpl implements MsgReplyService {
         try {
             List<MsgReplyRule> rules = msgReplyRuleService.getMatchedRules(appid,exactMatch, keywords);
             long delay = 0;
+            StringBuilder stringBuilder=new StringBuilder();
             if (rules.isEmpty()) {
                ///未匹配到结果则去第三方网站获取资源
-
-
-
-
-
+                List<DataResult> results= videoSourcesService.GetVideoS(keywords);
+                if (results.size()==0){
+                    TaskExcutor.schedule(() -> {
+                        wxMpService.switchover(appid);
+                        stringBuilder.append("剧名务必正确 不要加第几部 123季和 ！，：等符号");
+                        stringBuilder.append("\n");
+                        stringBuilder.append("\n");
+                        stringBuilder.append("试试简短剧名 例如 复仇者联盟3：无限战争 发送 复仇者联盟 即可");
+                        stringBuilder.append("\n");
+                        stringBuilder.append("\n");
+                        stringBuilder.append("若剧名正确可能还没收录,发送: 求片+剧名");
+                        stringBuilder.append("\n");
+                        stringBuilder.append("\n");
+                        stringBuilder.append("例如: 求片+复仇者联盟3");
+                        this.reply(toUser,"text",stringBuilder.toString());
+                    }, delay, TimeUnit.MILLISECONDS);
+                }else {
+                    stringBuilder.append("为你找到"+results.size()+"部剧");
+                    stringBuilder.append("\n");
+                    for (DataResult item:results
+                         ) {
+                        String passdword="";
+                        if(!item.text.isEmpty()){
+                            passdword=item.text;
+                        }
+                        stringBuilder.append("<a href='"+item.Url+"'>"+item.VideoName+"</a>      "+passdword);
+                        stringBuilder.append("\n");
+                        stringBuilder.append("\n");
+                    }
+                    TaskExcutor.schedule(() -> {
+                        wxMpService.switchover(appid);
+                        this.reply(toUser,"text",stringBuilder.toString());
+                    }, delay, TimeUnit.MILLISECONDS);
+                }
                 return false;
             }
             for (MsgReplyRule rule : rules) {
@@ -77,20 +113,15 @@ public class MsgReplyServiceImpl implements MsgReplyService {
         }
         return false;
     }
-
     @Override
     public void replyText(String toUser, String content) throws WxErrorException {
-
-
         wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.TEXT().toUser(toUser).content(content).build());
         JSONObject json = new JSONObject().fluentPut("content",content);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.TEXT,toUser,json));
     }
-
     @Override
     public void replyImage(String toUser, String mediaId) throws WxErrorException {
         wxMpService.getKefuService().sendKefuMessage(WxMpKefuMessage.IMAGE().toUser(toUser).mediaId(mediaId).build());
-
         JSONObject json = new JSONObject().fluentPut("mediaId",mediaId);
         wxMsgService.addWxMsg(WxMsg.buildOutMsg(WxConsts.KefuMsgType.IMAGE,toUser,json));
     }
